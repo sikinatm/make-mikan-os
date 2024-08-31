@@ -1,10 +1,18 @@
 [参考](https://www.webcyou.com/?p=10931)
 
+イメージを作成
+
+```
+$ qemu-img create -f raw disk.img 200M
+$ mkfs.fat -n 'MIKAN OS' -s 8 -f 2 -R 32 disk.img
+
+```
+
 実行可能ファイルを修正
 
 ```
 $ hdiutil attach -mountpoint mnt disk.img
-$ mkdir -p mnt/EFI/BOOT
+$ cp hello.efi mnt/EFI/BOOT/BOOTX64.EFI
 $ hdiutil detach mnt
 ```
 
