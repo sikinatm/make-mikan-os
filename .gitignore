@@ -1,1 +1,3 @@
 disk.img
+*.o
+hello.efi
