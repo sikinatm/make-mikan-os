@@ -1,0 +1,21 @@
+[package]
+name = "make-mikan-os-kernel"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+# 標準ライブラリを使用しない
+compiler_builtins = { version = "0.1", features = ["mem"], optional = true}
+
+[build-dependencies]
+bootimage = "0.10"
+
+[profile.release]
+panic = "abort" # カーネルや組み込みシステムではpanic時のスタックアンワインドを無効にする
+lto = true # リンク時最適化を有効にする
+
+[features]
+default = ["compiler_builtins"]
+
+[profile.dev]
+panic = "abort"

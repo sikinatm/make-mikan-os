@@ -1,0 +1,13 @@
+{
+  "name": "Basic Node.js",
+  "build": { "dockerfile": "Dockerfile.build" },
+  "remoteUser": "root",
+  "customizations" : {
+    "jetbrains" : {
+      "settings": {
+        "Docker:app:DockerSettings.dockerPath": "/usr/local/bin/docker"
+      },
+      "backend" : "RustRover"
+    }
+  }
+}

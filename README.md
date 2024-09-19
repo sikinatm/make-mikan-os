@@ -21,3 +21,6 @@ qemu 起動
 ```
 $ qemu-system-x86_64 -drive if=pflash,file=OVMF_CODE.fd -drive if=pflash,file=OVMF_VARS.fd -hda disk.img
 ```
+
+cargo build -Zbuild-std -Zbuild-std-features=compiler-builtins-mem --target x86_64-unknown-uefi
+../run_qemu.sh target/x86_64-unknown-uefi/bootloader.efi

@@ -1,0 +1,30 @@
+# ベースイメージとしてUbuntuを使用
+FROM ubuntu:22.04
+
+# 必要なパッケージをインストール
+RUN apt-get update && \
+    apt-get install -y \
+    build-essential \
+    curl \
+    llvm \
+    clang \
+    xorriso \
+    git \
+    nasm \
+    libssl-dev \
+    pkg-config \
+    cmake \
+    ca-certificates \
+    hdiutil
+
+
+# Rustツールチェインをインストール（ナイトリーバージョン）
+RUN curl https://sh.rustup.rs -sSf | sh -s -- -y --default-toolchain nightly
+ENV PATH="/root/.cargo/bin:${PATH}"
+
+# rust-srcコンポーネントとターゲットを追加
+RUN rustup component add rust-src --toolchain nightly
+RUN rustup target add x86_64-unknown-none --toolchain nightly
+
+# ワーキングディレクトリを設定
+WORKDIR /workspace

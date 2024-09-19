@@ -1,5 +1,5 @@
 [package]
-name = "make-mikan-os"
+name = "make-mikan-os-boot-loader"
 version = "0.1.0"
 edition = "2021"
 
