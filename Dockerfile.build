@@ -14,8 +14,7 @@ RUN apt-get update && \
     libssl-dev \
     pkg-config \
     cmake \
-    ca-certificates \
-    hdiutil
+    ca-certificates
 
 
 # Rustツールチェインをインストール（ナイトリーバージョン）
