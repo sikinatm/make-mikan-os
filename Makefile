@@ -6,4 +6,11 @@ run:
 	cp boot-loader/target/x86_64-unknown-uefi/debug/make-mikan-os-boot-loader.efi mnt/EFI/BOOT/BOOTX64.EFI
 	cp kernel/target/x86_64-unknown-none/debug/make-mikan-os-kernel mnt/kernel.elf
 	hdiutil detach mnt
-	qemu-system-x86_64 -drive if=pflash,file=OVMF_CODE.fd -drive if=pflash,file=OVMF_VARS.fd -hda disk.img
+	qemu-system-x86_64 \
+	    -m 1G -drive if=pflash,format=raw,readonly,file=OVMF_CODE.fd \
+	    -drive if=pflash,format=raw,file=OVMF_VARS.fd \
+	    -drive if=ide,index=0,media=disk,format=raw,file=disk.img \
+	    -device nec-usb-xhci,id=xhci \
+	    -device usb-mouse \
+	    -device usb-kbd \
+	    -monitor stdio
