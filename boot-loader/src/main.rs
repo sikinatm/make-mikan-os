@@ -47,6 +47,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
     let mut buf = [0u16; 260];
     let kernel_path = CStr16::from_str_with_buf("\\kernel.elf", &mut buf).unwrap();
 
+    // プログラムのファイルを読み込む
     let mut kernel_file = match root_dir.open(
         kernel_path,
         FileMode::Read,
@@ -67,12 +68,15 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
     let kernel_file_size = file_info.file_size() as usize;
 
     let kernel_base_addr = 0x100000 as *mut u8;
+    // メモリ確保
     bs.allocate_pages(
         AllocateType::Address(kernel_base_addr as PhysicalAddress),
         MemoryType::LOADER_DATA,
+        // ページサイズに値を切り上げるために0xFFFを足す
         (kernel_file_size + 0xFFF) / 0x1000,
     ).expect("Failed to allocate pages for kernel.");
 
+    // プログラムをメモリに展開
     kernel_file.read(unsafe { core::slice::from_raw_parts_mut(kernel_base_addr, kernel_file_size) })
         .expect("Failed to read kernel into memory");
 
