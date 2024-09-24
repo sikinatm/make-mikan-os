@@ -9,17 +9,21 @@ extern crate linked_list_allocator;
 #[macro_use]
 extern crate alloc;
 
-use core::fmt::Write;
+use alloc::vec::Vec;
+use core::fmt::{Debug, Write};
 use uefi::prelude::*;
 use linked_list_allocator::LockedHeap;
 use core::panic::PanicInfo;
+use core::ptr;
 use uefi::boot::{AllocateType, MemoryType};
-use uefi::CStr16;
+use uefi::{print, println, CStr16};
 use uefi::data_types::PhysicalAddress;
-use uefi::proto::media::file::{FileAttribute, FileHandle, FileInfo, FileMode, FileType, File};
+use uefi::proto::media::file::{FileAttribute, FileInfo, FileMode, File};
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
+
+type EntryPointType = extern "C" fn();
 
 fn init_heap() {
     // ヒープ領域を初期化する必要があります
@@ -38,7 +42,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
 
     st.stdout().reset(false).unwrap();
 
-    writeln!(st.stdout(), "Starting Mikan OS...").unwrap();
+    writeln!(st.stdout(), "Starting MikanOS...").unwrap();
 
     let bs = st.boot_services();
 
@@ -67,7 +71,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
 
     let kernel_file_size = file_info.file_size() as usize;
 
-    let kernel_base_addr = 0x100000 as *mut u8;
+    let kernel_base_addr= 0x100000 as *mut u64;
     // メモリ確保
     bs.allocate_pages(
         AllocateType::Address(kernel_base_addr as PhysicalAddress),
@@ -76,9 +80,41 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
         (kernel_file_size + 0xFFF) / 0x1000,
     ).expect("Failed to allocate pages for kernel.");
 
-    // プログラムをメモリに展開
-    kernel_file.read(unsafe { core::slice::from_raw_parts_mut(kernel_base_addr, kernel_file_size) })
-        .expect("Failed to read kernel into memory");
+    // // プログラムをメモリに展開
+    // kernel_file.read(unsafe { core::slice::from_raw_parts_mut(kernel_base_addr, kernel_file_size) })
+    //     .expect("Failed to read kernel into memory");
+
+    let mut buffer = Vec::new();
+    kernel_file.read(&mut buffer).unwrap();
+
+    let entry_addr = unsafe {kernel_base_addr.add(24) };
+
+    let a = unsafe { *entry_addr };
+
+    println!("before {}", a);
+    unsafe {
+        ptr::copy_nonoverlapping(buffer.as_ptr(), kernel_base_addr as *mut u8, kernel_file_size);
+    }
+
+    let b = unsafe { *entry_addr };
+
+    println!("after {}", b);
+
+
+
+    writeln!(st.stdout(), "File Info is. {}, {}", file_info.file_name(), file_info.file_size()).unwrap();
+
+    unsafe{
+        let _ = st.exit_boot_services(MemoryType::LOADER_DATA);
+    }
+
+    // エントリーポイントの型にキャスト
+    let entry_point: EntryPointType  = unsafe { core::mem::transmute(entry_addr) };
+
+    // エントリーポイント関数を呼び出し、カーネルを起動
+    entry_point();
+
+    println!("end");
 
     Status::SUCCESS
 }
