@@ -79,8 +79,9 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
         let _ = st.exit_boot_services(MemoryType::LOADER_DATA);
     }
 
-    // 一旦エントリポイントのアドレスを直指定する
-    let entry_addr = 0x0000000000100210;
+    // 64ビット用のELFファイルのエントリポイントのアドレスは、オフセット24バイトの位置から8バイト整数で書かれている
+    let entry_addr_offset = (kernel_base_addr + 24) as *mut u64;
+    let entry_addr = unsafe { *entry_addr_offset };
 
     // エントリーポイントの型にキャスト
     let entry_point: EntryPointType  = unsafe { core::mem::transmute(entry_addr as *mut u8) };
