@@ -3,33 +3,26 @@
 #![feature(asm)]
 #![feature(abi_efiapi)]
 
-extern crate linked_list_allocator;
-
 // まだ未使用
 #[macro_use]
 extern crate alloc;
+extern crate linked_list_allocator;
 
-use core::fmt::Write;
-use uefi::prelude::*;
-use linked_list_allocator::LockedHeap;
+use core::fmt::{Debug, Write};
 use core::panic::PanicInfo;
+use linked_list_allocator::LockedHeap;
 use uefi::boot::{AllocateType, MemoryType};
-use uefi::CStr16;
 use uefi::data_types::PhysicalAddress;
-use uefi::proto::media::file::{FileAttribute, FileHandle, FileInfo, FileMode, FileType, File};
+use uefi::prelude::*;
+use uefi::proto::media::file::{File, FileAttribute, FileInfo, FileMode};
+use uefi::{println, CStr16};
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
-fn init_heap() {
-    // ヒープ領域を初期化する必要があります
-    // 例えば、アドレスとサイズを指定して設定
-    let heap_start = 0x1000;
-    let heap_size = 1024 * 1024; // 1MB
-    unsafe {
-        ALLOCATOR.lock().init(heap_start, heap_size);
-    }
-}
+type EntryPointType = extern "sysv64" fn();
+
+const UEFI_PAGE_SIZE: usize = 0x1000;
 
 #[entry]
 fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
@@ -38,7 +31,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
 
     st.stdout().reset(false).unwrap();
 
-    writeln!(st.stdout(), "Starting Mikan OS...").unwrap();
+    writeln!(st.stdout(), "Starting MikanOS...").unwrap();
 
     let bs = st.boot_services();
 
@@ -67,18 +60,30 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
 
     let kernel_file_size = file_info.file_size() as usize;
 
-    let kernel_base_addr = 0x100000 as *mut u8;
+    let kernel_base_addr = 0x100000;
+
     // メモリ確保
     bs.allocate_pages(
         AllocateType::Address(kernel_base_addr as PhysicalAddress),
         MemoryType::LOADER_DATA,
         // ページサイズに値を切り上げるために0xFFFを足す
-        (kernel_file_size + 0xFFF) / 0x1000,
+        (kernel_file_size + 0xFFF) / UEFI_PAGE_SIZE,
     ).expect("Failed to allocate pages for kernel.");
 
     // プログラムをメモリに展開
-    kernel_file.read(unsafe { core::slice::from_raw_parts_mut(kernel_base_addr, kernel_file_size) })
+    kernel_file.read(unsafe { core::slice::from_raw_parts_mut(kernel_base_addr as *mut u8, kernel_file_size) })
         .expect("Failed to read kernel into memory");
+
+    // 一旦エントリポイントのアドレスを直指定する
+    let entry_addr = 0x0000000000100210;
+
+    // エントリーポイントの型にキャスト
+    let entry_point: EntryPointType  = unsafe { core::mem::transmute(entry_addr as *mut u8) };
+
+    // エントリーポイント関数を呼び出し、カーネルを起動
+    entry_point();
+
+    println!("end");
 
     Status::SUCCESS
 }

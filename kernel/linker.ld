@@ -1,25 +1,14 @@
+OUTPUT_FORMAT(elf64-x86-64)
 ENTRY(KernelMain)
-SECTIONS
-{
-  . = 0x100000;
 
-  .text :
-  {
-    *(.text)
-  }
+SECTIONS {
 
-  .rodata :
-  {
-    *(.rodata)
-  }
+  . = 0x100000 + SIZEOF_HEADERS;
 
-  .data :
-  {
-    *(.data)
-  }
-
-  .bss :
-  {
-    *(.bss)
+  .text : {
+    *(.text .text.*)
+    *(.data .data.*)
+    *(.rodata .rodata.*)
+    *(.bss .bss.*)
   }
 }
