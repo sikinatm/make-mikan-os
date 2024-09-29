@@ -40,6 +40,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
     let mut buf = [0u16; 260];
     let kernel_path = CStr16::from_str_with_buf("\\kernel.elf", &mut buf).unwrap();
 
+    println!("Loading kernel file...");
     // プログラムのファイルを読み込む
     let mut kernel_file = match root_dir.open(
         kernel_path,
@@ -73,6 +74,10 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
     // プログラムをメモリに展開
     kernel_file.read(unsafe { core::slice::from_raw_parts_mut(kernel_base_addr as *mut u8, kernel_file_size) })
         .expect("Failed to read kernel into memory");
+
+    unsafe {
+        let _ = st.exit_boot_services(MemoryType::LOADER_DATA);
+    }
 
     // 一旦エントリポイントのアドレスを直指定する
     let entry_addr = 0x0000000000100210;
