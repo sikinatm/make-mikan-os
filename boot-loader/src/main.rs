@@ -15,12 +15,13 @@ use uefi::boot::{AllocateType, MemoryType};
 use uefi::data_types::PhysicalAddress;
 use uefi::prelude::*;
 use uefi::proto::media::file::{File, FileAttribute, FileInfo, FileMode};
-use uefi::{println, CStr16};
+use uefi::{boot, println, CStr16};
+use uefi::proto::console::gop::{GraphicsOutput};
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
-type EntryPointType = extern "sysv64" fn();
+type EntryPointType = extern "sysv64" fn(frame_buffer_base: u64, frame_buffer_size: u64);
 
 const UEFI_PAGE_SIZE: usize = 0x1000;
 
@@ -75,6 +76,23 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
     kernel_file.read(unsafe { core::slice::from_raw_parts_mut(kernel_base_addr as *mut u8, kernel_file_size) })
         .expect("Failed to read kernel into memory");
 
+    // GOP
+    let gop_handle = match boot::get_handle_for_protocol::<GraphicsOutput>() {
+        Ok(result) => result,
+        _ => {
+            writeln!(st.stdout(), "Failed to get graphics handle.").unwrap();
+            return Status::LOAD_ERROR;
+        }
+    };
+    let mut gop = match boot::open_protocol_exclusive::<GraphicsOutput>(gop_handle) {
+        Ok(result) => result,
+        _ => {
+            writeln!(st.stdout(), "Failed to get graphics output").unwrap();
+            return Status::LOAD_ERROR;
+        }
+    };
+    let mut gop_frame_buffer = gop.frame_buffer();
+
     unsafe {
         let _ = st.exit_boot_services(MemoryType::LOADER_DATA);
     }
@@ -87,7 +105,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
     let entry_point: EntryPointType  = unsafe { core::mem::transmute(entry_addr as *mut u8) };
 
     // エントリーポイント関数を呼び出し、カーネルを起動
-    entry_point();
+    entry_point(gop_frame_buffer.as_mut_ptr() as u64, gop.frame_buffer().size() as u64);
 
     println!("end");
 
