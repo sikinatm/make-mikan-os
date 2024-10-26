@@ -8,6 +8,7 @@
 extern crate alloc;
 extern crate linked_list_allocator;
 
+use core::arch::asm;
 use core::fmt::{Debug, Write};
 use core::panic::PanicInfo;
 use linked_list_allocator::LockedHeap;
@@ -81,14 +82,14 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
         Ok(result) => result,
         _ => {
             writeln!(st.stdout(), "Failed to get graphics handle.").unwrap();
-            return Status::LOAD_ERROR;
+            halt();
         }
     };
     let mut gop = match boot::open_protocol_exclusive::<GraphicsOutput>(gop_handle) {
         Ok(result) => result,
         _ => {
             writeln!(st.stdout(), "Failed to get graphics output").unwrap();
-            return Status::LOAD_ERROR;
+            halt();
         }
     };
     let mut gop_frame_buffer = gop.frame_buffer();
@@ -110,6 +111,12 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
     println!("end");
 
     Status::SUCCESS
+}
+
+fn halt () -> ! {
+    loop {
+        unsafe { asm!("hlt") };
+    }
 }
 
 #[panic_handler]
