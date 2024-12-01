@@ -1,15 +1,13 @@
 #![no_std]
 #![no_main]
-#![feature(asm)]
-#![feature(abi_efiapi)]
 
 // まだ未使用
-#[macro_use]
+// #[macro_use]
 extern crate alloc;
 extern crate linked_list_allocator;
 
 use core::arch::asm;
-use core::fmt::{Debug, Write};
+use core::fmt::{Write};
 use core::panic::PanicInfo;
 use linked_list_allocator::LockedHeap;
 use uefi::boot::{AllocateType, MemoryType};
@@ -18,11 +16,12 @@ use uefi::prelude::*;
 use uefi::proto::media::file::{File, FileAttribute, FileInfo, FileMode};
 use uefi::{boot, println, CStr16};
 use uefi::proto::console::gop::{GraphicsOutput};
+use make_mikan_os_common::frame_buffer_config::{FrameBufferConfig, PixelFormat};
 
 #[global_allocator]
 static ALLOCATOR: LockedHeap = LockedHeap::empty();
 
-type EntryPointType = extern "sysv64" fn(frame_buffer_base: u64, frame_buffer_size: u64);
+type EntryPointType = extern "sysv64" fn(frame_buffer_config: FrameBufferConfig);
 
 const UEFI_PAGE_SIZE: usize = 0x1000;
 
@@ -55,6 +54,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
             return Status::LOAD_ERROR;
         }
     };
+    println!("Complete load kernel file...");
 
     let mut file_info_buffer = [0u8; 512];
 
@@ -65,6 +65,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
 
     let kernel_base_addr = 0x100000;
 
+    println!("Start to allocate page...");
     // メモリ確保
     bs.allocate_pages(
         AllocateType::Address(kernel_base_addr as PhysicalAddress),
@@ -73,10 +74,13 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
         (kernel_file_size + 0xFFF) / UEFI_PAGE_SIZE,
     ).expect("Failed to allocate pages for kernel.");
 
+    println!("Start to allocate kernel file...");
+
     // プログラムをメモリに展開
     kernel_file.read(unsafe { core::slice::from_raw_parts_mut(kernel_base_addr as *mut u8, kernel_file_size) })
         .expect("Failed to read kernel into memory");
 
+    println!("Start to set up GOP handle...");
     // GOP
     let gop_handle = match boot::get_handle_for_protocol::<GraphicsOutput>() {
         Ok(result) => result,
@@ -85,6 +89,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
             halt();
         }
     };
+    println!("Start to set up GOP...");
     let mut gop = match boot::open_protocol_exclusive::<GraphicsOutput>(gop_handle) {
         Ok(result) => result,
         _ => {
@@ -92,7 +97,22 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
             halt();
         }
     };
-    let mut gop_frame_buffer = gop.frame_buffer();
+    println!("Start to detect Pixel Format...");
+    let pixel_format: PixelFormat = match gop.current_mode_info().pixel_format() {
+        uefi::proto::console::gop::PixelFormat::Rgb => PixelFormat::PixelRGBResv8BitPerColor,
+        uefi::proto::console::gop::PixelFormat::Bgr => PixelFormat::PixelBGRResv8BitPerColor,
+        _ => {
+            writeln!(st.stdout(), "Unsupported pixel format").unwrap();
+            halt();
+        }
+    };
+    println!("Start to exit boot service...");
+    let config = FrameBufferConfig::new(
+        gop.frame_buffer().as_mut_ptr() as u64,
+        gop.frame_buffer().size(),
+        gop.current_mode_info().resolution(),
+        pixel_format,
+    );
 
     unsafe {
         let _ = st.exit_boot_services(MemoryType::LOADER_DATA);
@@ -106,7 +126,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
     let entry_point: EntryPointType  = unsafe { core::mem::transmute(entry_addr as *mut u8) };
 
     // エントリーポイント関数を呼び出し、カーネルを起動
-    entry_point(gop_frame_buffer.as_mut_ptr() as u64, gop.frame_buffer().size() as u64);
+    entry_point(config);
 
     println!("end");
 

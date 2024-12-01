@@ -1,11 +1,12 @@
 [package]
-name = "make-mikan-os-kernel"
+name = "make_mikan_os_kernel"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
 # 標準ライブラリを使用しない
 compiler_builtins = { version = "0.1", features = ["mem"], optional = true}
+make_mikan_os_common = { path = "../common" }
 
 [build-dependencies]
 bootimage = "0.10"

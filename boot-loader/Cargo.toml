@@ -1,5 +1,5 @@
 [package]
-name = "make-mikan-os-boot-loader"
+name = "make_mikan_os_boot_loader"
 version = "0.1.0"
 edition = "2021"
 
@@ -9,5 +9,5 @@ log = {version = "0.4", default-features = false}
 # featuresはとりあえず全部有効にする
 uefi = {version = "0.31", features = ["alloc", "logger"]}
 # Rustがno_stdで要求するpanic_handlerの提供、およびinitユーティリティ
-uefi-services = "0.25"
-linked_list_allocator = "0.9.1"
+linked_list_allocator = "0.10.5"
+make_mikan_os_common = { path = "../common" }

@@ -76,11 +76,16 @@ dependencies = [
 ]
 
 [[package]]
-name = "make-mikan-os-kernel"
+name = "make_mikan_os_common"
+version = "0.1.0"
+
+[[package]]
+name = "make_mikan_os_kernel"
 version = "0.1.0"
 dependencies = [
  "bootimage",
  "compiler_builtins",
+ "make_mikan_os_common",
 ]
 
 [[package]]

@@ -3,8 +3,8 @@ boot-loader:
 
 run:
 	hdiutil attach -mountpoint mnt disk.img
-	cp boot-loader/target/x86_64-unknown-uefi/debug/make-mikan-os-boot-loader.efi mnt/EFI/BOOT/BOOTX64.EFI
-	cp kernel/target/x86_64-unknown-none/debug/make-mikan-os-kernel mnt/kernel.elf
+	cp boot-loader/target/x86_64-unknown-uefi/debug/make_mikan_os_boot_loader.efi mnt/EFI/BOOT/BOOTX64.EFI
+	cp kernel/target/x86_64-unknown-none/debug/make_mikan_os_kernel mnt/kernel.elf
 	hdiutil detach mnt
 	qemu-system-x86_64 \
 	    -m 1G -drive if=pflash,format=raw,readonly,file=OVMF_CODE.fd \
