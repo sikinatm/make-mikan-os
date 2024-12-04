@@ -112,6 +112,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
         frame_buffer_size: gop.frame_buffer().size() as u64,
         horizontal_resolution: gop.current_mode_info().resolution().0 as u64,
         vertical_resolution: gop.current_mode_info().resolution().1 as u64,
+        pixels_per_scan_line: gop.current_mode_info().stride() as u64,
         pixel_format,
     };
 
