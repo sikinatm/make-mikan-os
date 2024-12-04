@@ -7,38 +7,16 @@ pub enum PixelFormat {
 
 #[repr(C)]
 pub struct FrameBufferConfig {
-    frame_buffer: u64,
+    pub frame_buffer: u64,
     // プラットフォームによって変わりそうなので、u32 ではなく usize で定義
-    frame_buffer_size: usize,
-    horizontal_resolution: usize,
-    vertical_resolution: usize,
-    pixel_format: PixelFormat,
+    pub frame_buffer_size: u64,
+    pub horizontal_resolution: u64,
+    pub vertical_resolution: u64,
+    pub pixel_format: PixelFormat,
 }
 
 impl FrameBufferConfig {
-    pub fn new(frame_buffer: u64, frame_buffer_size: usize, resolution: (usize, usize), pixel_format: PixelFormat) -> Self {
-        Self {
-            frame_buffer,
-            frame_buffer_size,
-            horizontal_resolution: resolution.0,
-            vertical_resolution: resolution.1,
-            pixel_format,
-        }
-    }
-
-    pub fn frame_buffer(&self) -> *mut u8 {
-        self.frame_buffer as *mut u8
-    }
-
-    pub fn pixels_per_scan_line(&self) -> usize {
+    pub fn pixels_per_scan_line(&self) -> u64 {
         self.frame_buffer_size / self.vertical_resolution
-    }
-
-    pub fn resolution(&self) -> (usize, usize) {
-        (self.horizontal_resolution, self.vertical_resolution)
-    }
-
-    pub fn pixel_format(&self) -> PixelFormat {
-        self.pixel_format
     }
 }

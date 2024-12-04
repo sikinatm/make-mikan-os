@@ -107,12 +107,13 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
         }
     };
     println!("Start to exit boot service...");
-    let config = FrameBufferConfig::new(
-        gop.frame_buffer().as_mut_ptr() as u64,
-        gop.frame_buffer().size(),
-        gop.current_mode_info().resolution(),
+    let config = FrameBufferConfig {
+        frame_buffer: gop.frame_buffer().as_mut_ptr() as u64,
+        frame_buffer_size: gop.frame_buffer().size() as u64,
+        horizontal_resolution: gop.current_mode_info().resolution().0 as u64,
+        vertical_resolution: gop.current_mode_info().resolution().1 as u64,
         pixel_format,
-    );
+    };
 
     unsafe {
         let _ = st.exit_boot_services(MemoryType::LOADER_DATA);
