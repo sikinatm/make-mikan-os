@@ -36,7 +36,7 @@ impl Display {
 
 // MEMO: frame_buffer_configに生やしたメンバメソッドを使うと、その時点でエラーになっていそう
 #[no_mangle]
-pub extern "C" fn KernelMain(frame_buffer_config: FrameBufferConfig) {
+pub extern "C" fn kernel_main(frame_buffer_config: FrameBufferConfig) {
     let display = Display {
         pixel_format: frame_buffer_config.pixel_format,
         frame_buffer: frame_buffer_config.frame_buffer as *mut u8,
