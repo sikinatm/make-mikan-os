@@ -30,6 +30,8 @@ static ALLOCATOR: LockedHeap = LockedHeap::empty();
 const HEAP_SIZE: usize = 10 * 1024 * 1024; // 1 MiB
 static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
 
+// ヒープ領域を確保する
+// staticでmutableな変数の参照を使わざるを得ないので、warningを抑制しておく
 #[allow(static_mut_refs)]
 fn init_heap() {
     unsafe {
