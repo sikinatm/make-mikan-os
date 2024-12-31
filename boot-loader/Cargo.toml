@@ -11,3 +11,5 @@ uefi = {version = "0.31", features = ["alloc", "logger"]}
 # Rustがno_stdで要求するpanic_handlerの提供、およびinitユーティリティ
 linked_list_allocator = "0.10.5"
 make_mikan_os_common = { path = "../common" }
+# no_std
+elf = { version = "0.7.4", default-features = false }
