@@ -21,7 +21,6 @@ use make_mikan_os_common::frame_buffer_config::{FrameBufferConfig, PixelFormat};
 
 // elfクレートのインポート
 // no_std
-//
 use elf::endian::AnyEndian;
 use elf::ElfBytes;
 
@@ -31,6 +30,7 @@ static ALLOCATOR: LockedHeap = LockedHeap::empty();
 const HEAP_SIZE: usize = 10 * 1024 * 1024; // 1 MiB
 static mut HEAP: [u8; HEAP_SIZE] = [0; HEAP_SIZE];
 
+#[allow(static_mut_refs)]
 fn init_heap() {
     unsafe {
         ALLOCATOR.lock().init(HEAP.as_mut_ptr(), HEAP_SIZE);
