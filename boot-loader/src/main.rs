@@ -6,13 +6,12 @@ extern crate linked_list_allocator;
 
 use alloc::vec;
 use core::arch::asm;
-use core::fmt::Write;
 use core::panic::PanicInfo;
 
 use linked_list_allocator::LockedHeap;
-use uefi::boot::{AllocateType, MemoryType};
+use uefi::boot::{allocate_pages, exit_boot_services, get_image_file_system, image_handle, AllocateType, MemoryType};
 use uefi::data_types::PhysicalAddress;
-use uefi::prelude::*;
+use uefi::prelude::{entry, Status};
 use uefi::proto::media::file::{File, FileAttribute, FileInfo, FileMode};
 use uefi::{boot, println, CStr16};
 use uefi::proto::console::gop::GraphicsOutput;
@@ -44,16 +43,15 @@ type EntryPointType = extern "sysv64" fn(FrameBufferConfig);
 const UEFI_PAGE_SIZE: usize = 0x1000;
 
 #[entry]
-fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
+fn efi_main() -> Status {
     init_heap();
     uefi::helpers::init().unwrap();
-    st.stdout().reset(false).unwrap();
-    writeln!(st.stdout(), "Starting MikanOS...").unwrap();
 
-    let bs = st.boot_services();
+    println!("Starting MikanOS...");
 
     // kernel.elfを開く
-    let mut root_dir = bs.get_image_file_system(handle).unwrap().open_volume().unwrap();
+    let handle = image_handle();
+    let mut root_dir = get_image_file_system(handle).unwrap().open_volume().unwrap();
     let mut buf = [0u16; 260];
     let kernel_path = CStr16::from_str_with_buf("\\kernel.elf", &mut buf).unwrap();
 
@@ -61,7 +59,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
     let mut kernel_file = match root_dir.open(kernel_path, FileMode::Read, FileAttribute::empty()) {
         Ok(file) => file.into_regular_file().unwrap(),
         _ => {
-            writeln!(st.stdout(), "Failed to open kernel file.").unwrap();
+            println!("Failed to open kernel file.");
             return Status::LOAD_ERROR;
         }
     };
@@ -102,7 +100,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
     let kernel_mem_size = (max_addr - min_addr) as usize;
 
     println!("Allocating memory for kernel... min_addr: {:#x}, kernel_mem_size: {:#x}", min_addr, kernel_mem_size);
-    bs.allocate_pages(
+    allocate_pages(
         AllocateType::Address(min_addr as PhysicalAddress),
         MemoryType::LOADER_DATA,
         (kernel_mem_size + UEFI_PAGE_SIZE - 1) / UEFI_PAGE_SIZE,
@@ -146,7 +144,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
     let gop_handle = match boot::get_handle_for_protocol::<GraphicsOutput>() {
         Ok(result) => result,
         _ => {
-            writeln!(st.stdout(), "Failed to get graphics handle.").unwrap();
+            println!("Failed to get graphics handle.");
             halt();
         }
     };
@@ -163,7 +161,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
         uefi::proto::console::gop::PixelFormat::Rgb => PixelFormat::PixelRGBResv8BitPerColor,
         uefi::proto::console::gop::PixelFormat::Bgr => PixelFormat::PixelBGRResv8BitPerColor,
         _ => {
-            writeln!(st.stdout(), "Unsupported pixel format").unwrap();
+            println!("Unsupported pixel format");
             halt();
         }
     };
@@ -171,7 +169,7 @@ fn efi_main(handle: Handle, mut st: SystemTable<Boot>) -> Status {
     println!("Exiting boot services...");
 
     unsafe {
-        let _ = st.exit_boot_services(MemoryType::LOADER_DATA);
+        let _ = exit_boot_services(MemoryType::LOADER_DATA);
     }
 
     let config = FrameBufferConfig {
