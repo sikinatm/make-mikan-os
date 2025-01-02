@@ -1,11 +1,13 @@
 #![no_std]
 #![no_main]
 
+mod font;
+
 use core::arch::asm;
 use make_mikan_os_common::frame_buffer_config::{FrameBufferConfig, PixelFormat};
 use make_mikan_os_common::pixel_color::PixelColor;
 
-struct Display {
+struct PixelWriter {
     pub pixel_format: PixelFormat,
     pub frame_buffer: *mut u8,
     pub vertical_resolution: u64,
@@ -13,8 +15,8 @@ struct Display {
     pub pixels_per_scan_line: u64,
 }
 
-impl Display {
-    fn write_pixel(&self, x: isize, y: isize, color: PixelColor) {
+impl PixelWriter {
+    fn write(&self, x: isize, y: isize, color: &PixelColor) {
         // 縦にy段目のところから、横にx個進んだ位置を計算
         let pixel_position = (self.pixels_per_scan_line as isize) * y + x;
         let position = pixel_position * 4;
@@ -37,7 +39,7 @@ impl Display {
 // MEMO: frame_buffer_configに生やしたメンバメソッドを使うと、その時点でエラーになっていそう
 #[no_mangle]
 pub extern "C" fn kernel_main(frame_buffer_config: FrameBufferConfig) {
-    let display = Display {
+    let pixel_writer = PixelWriter {
         pixel_format: frame_buffer_config.pixel_format,
         frame_buffer: frame_buffer_config.frame_buffer as *mut u8,
         vertical_resolution: frame_buffer_config.vertical_resolution,
@@ -45,13 +47,17 @@ pub extern "C" fn kernel_main(frame_buffer_config: FrameBufferConfig) {
         pixels_per_scan_line: frame_buffer_config.pixels_per_scan_line,
     };
 
-    for i in 0..display.horizontal_resolution {
-        for j in 0..display.vertical_resolution {
+    let ascii_writer = font::AsciiWriter {
+        pixel_writer: &pixel_writer,
+    };
+
+    for i in 0..pixel_writer.horizontal_resolution {
+        for j in 0..pixel_writer.vertical_resolution {
             // PixelColorにnewメソッドを生やす形だと動かない。なぜ？
-            display.write_pixel(
+            pixel_writer.write(
                 i as isize,
                 j as isize,
-                PixelColor {
+                &PixelColor {
                     r: 255,
                     g: 255,
                     b: 255,
@@ -59,12 +65,13 @@ pub extern "C" fn kernel_main(frame_buffer_config: FrameBufferConfig) {
             );
         }
     }
+
     for i in 0..200 {
         for j in 0..100 {
-            display.write_pixel(
+            pixel_writer.write(
                 i,
                 j,
-                PixelColor {
+                &PixelColor {
                     r: 0,
                     g: 255,
                     b: 0,
@@ -72,6 +79,9 @@ pub extern "C" fn kernel_main(frame_buffer_config: FrameBufferConfig) {
             );
         }
     }
+
+    ascii_writer.write_ascii(50, 50, 'A', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(58, 50, 'A', &PixelColor { r: 0, g: 0, b: 0 });
 
     loop {
         unsafe { asm!("hlt") };
