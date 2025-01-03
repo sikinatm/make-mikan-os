@@ -22,7 +22,7 @@ pub struct AsciiWriter<'a> {
 impl AsciiWriter<'_> {
     pub fn write_ascii(&self, x: isize, y: isize, c: char, color: &PixelColor) {
         let font = match c {
-            'A' => get_font(65),
+            'A' => get_font(64),
             _ => &[0; 16],
         };
 
