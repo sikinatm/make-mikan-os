@@ -3,3 +3,5 @@ target
 disk.img
 *.o
 hello.efi
+*.bin
+*.bdf
