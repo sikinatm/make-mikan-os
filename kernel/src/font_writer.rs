@@ -6,7 +6,8 @@ static FONT_BIN: &'static [u8] = include_bytes!("../font.bin");
 fn get_font(char_code: u8) -> &'static [u8] {
     // 1文字あたり16バイトのフォントが並んでいる前提など
     let bytes_per_char = 16;
-    let start = char_code as usize * bytes_per_char;
+    // ASCIIコードは1から始まるので、1を引く
+    let start = (char_code - 1) as usize * bytes_per_char;
     let end = start + bytes_per_char;
     if end <= FONT_BIN.len() {
         &FONT_BIN[start..end]
@@ -21,10 +22,7 @@ pub struct AsciiWriter<'a> {
 
 impl AsciiWriter<'_> {
     pub fn write_ascii(&self, x: isize, y: isize, c: char, color: &PixelColor) {
-        let font = match c {
-            'A' => get_font(64),
-            _ => &[0; 16],
-        };
+        let font = get_font(c as u8);
 
         for dy in 0..16 {
             for dx in 0..8 {
