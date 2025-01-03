@@ -1,6 +1,11 @@
 boot-loader:
 	cd boot-loader && cargo build -Zbuild-std -Zbuild-std-features=compiler-builtins-mem --target x86_64-unknown-uefi
 
+kernel:
+	cd tools && cargo run -q -- shnm8x16a.bdf ../font.bin
+	mv font.bin kernel/font.bin
+	cd kernel && cargo build
+
 run:
 	hdiutil attach -mountpoint mnt disk.img
 	cp boot-loader/target/x86_64-unknown-uefi/debug/make_mikan_os_boot_loader.efi mnt/EFI/BOOT/BOOTX64.EFI

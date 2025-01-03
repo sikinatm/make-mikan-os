@@ -1,40 +1,13 @@
 #![no_std]
 #![no_main]
 
-mod font;
+mod font_writer;
+mod pixel_writer;
 
 use core::arch::asm;
-use make_mikan_os_common::frame_buffer_config::{FrameBufferConfig, PixelFormat};
+use make_mikan_os_common::frame_buffer_config::{FrameBufferConfig};
 use make_mikan_os_common::pixel_color::PixelColor;
-
-struct PixelWriter {
-    pub pixel_format: PixelFormat,
-    pub frame_buffer: *mut u8,
-    pub vertical_resolution: u64,
-    pub horizontal_resolution: u64,
-    pub pixels_per_scan_line: u64,
-}
-
-impl PixelWriter {
-    fn write(&self, x: isize, y: isize, color: &PixelColor) {
-        // 縦にy段目のところから、横にx個進んだ位置を計算
-        let pixel_position = (self.pixels_per_scan_line as isize) * y + x;
-        let position = pixel_position * 4;
-
-        match self.pixel_format {
-            PixelFormat::PixelRGBResv8BitPerColor => unsafe {
-                *self.frame_buffer.offset(position) = color.r;
-                *self.frame_buffer.offset(position + 1) = color.g;
-                *self.frame_buffer.offset(position + 2) = color.b;
-            },
-            PixelFormat::PixelBGRResv8BitPerColor => unsafe {
-                *self.frame_buffer.offset(position) = color.b;
-                *self.frame_buffer.offset(position + 1) = color.g;
-                *self.frame_buffer.offset(position + 2) = color.r;
-            },
-        }
-    }
-}
+use crate::pixel_writer::PixelWriter;
 
 // MEMO: frame_buffer_configに生やしたメンバメソッドを使うと、その時点でエラーになっていそう
 #[no_mangle]
@@ -47,7 +20,7 @@ pub extern "C" fn kernel_main(frame_buffer_config: FrameBufferConfig) {
         pixels_per_scan_line: frame_buffer_config.pixels_per_scan_line,
     };
 
-    let ascii_writer = font::AsciiWriter {
+    let ascii_writer = font_writer::AsciiWriter {
         pixel_writer: &pixel_writer,
     };
 
