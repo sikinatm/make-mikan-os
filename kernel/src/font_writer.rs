@@ -21,7 +21,7 @@ pub struct AsciiWriter<'a> {
 }
 
 impl AsciiWriter<'_> {
-    pub fn write_ascii(&self, x: isize, y: isize, c: char, color: &PixelColor) {
+    pub fn write(&self, x: isize, y: isize, c: char, color: &PixelColor) {
         let font = get_font(c as u8);
 
         for dy in 0..16 {

@@ -53,8 +53,8 @@ pub extern "C" fn kernel_main(frame_buffer_config: FrameBufferConfig) {
         }
     }
 
-    ascii_writer.write_ascii(50, 50, 'A', &PixelColor { r: 0, g: 0, b: 0 });
-    ascii_writer.write_ascii(58, 50, 'A', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write(50, 50, 'A', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write(58, 50, 'A', &PixelColor { r: 0, g: 0, b: 0 });
 
     loop {
         unsafe { asm!("hlt") };
