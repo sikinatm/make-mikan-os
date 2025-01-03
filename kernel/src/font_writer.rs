@@ -26,10 +26,10 @@ impl AsciiWriter<'_> {
 
         for dy in 0..16 {
             for dx in 0..8 {
-                // これは描画されない。ただし、これの後に無条件で描画するコードを入れると描画されるので、実行時エラーではない
-                if (font[dy] & (0x80 >> dx)) != 0 {
-                    self.pixel_writer.write(x + dx, y + (dy as isize), color);
+                if (font[dy] & (0x80 >> dx)) == 0 {
+                    continue;
                 }
+                self.pixel_writer.write(x + dx, y + (dy as isize), color);
             }
         }
     }
