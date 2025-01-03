@@ -53,8 +53,23 @@ pub extern "C" fn kernel_main(frame_buffer_config: FrameBufferConfig) {
         }
     }
 
-    ascii_writer.write_ascii(50, 50, 'A', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(50, 50, 'H', &PixelColor { r: 0, g: 0, b: 0 });
     ascii_writer.write_ascii(58, 50, 'A', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(66, 50, 'P', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(74, 50, 'P', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(82, 50, 'Y', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(98, 50, 'N', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(106, 50, 'E', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(114, 50, 'W', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(130, 50, 'Y', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(138, 50, 'E', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(146, 50, 'A', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(154, 50, 'R', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(170, 50, '2', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(178, 50, '0', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(186, 50, '2', &PixelColor { r: 0, g: 0, b: 0 });
+    ascii_writer.write_ascii(194, 50, '5', &PixelColor { r: 0, g: 0, b: 0 });
+
 
     loop {
         unsafe { asm!("hlt") };
